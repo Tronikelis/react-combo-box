@@ -9,7 +9,6 @@ const useStyles = makeStyles(() => createStyles({
     root: {
         position: "relative",
         width: "100%",
-        maxWidth: 300,
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
