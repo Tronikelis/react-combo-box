@@ -1,40 +1,44 @@
-import { useState, useEffect, memo, useRef } from "react";
+import { useState, memo, useRef, CSSProperties } from "react";
 import { makeStyles, createStyles } from "@material-ui/styles";
 
 /* ---------------------------------------------------------------------------------------------- */
 /*                                 https://i.imgur.com/XnghBD5.png                                */
 /* ---------------------------------------------------------------------------------------------- */
 
-const useStyles = makeStyles(() => createStyles({
-    root: {
-        position: "relative",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "flex-start",
-    },
-    input: {
-        width: "100%",
-        height: "auto",
-        borderRadius: 0,
-        outline: "none",
-        border: "none",
-    },
-    item: {
-        width: "100%",
-        height: "auto",
-    },
-    items: {
-        zIndex: 1,
-        position: "absolute",
-        top: "100%",
-        width: "100%",
-        outline: "none",
-        maxHeight: "30vh",
-        overflow: "auto",
-    },
-}));
+const useStyles = makeStyles(() =>
+    createStyles({
+        root: {
+            position: "relative",
+            width: "auto",
+            height: "auto",
+            borderRadius: "10%",
+        },
+        input: {
+            width: "100%",
+            height: "auto",
+            border: "none",
+            outline: "none",
+        },
+        inputContainer: {
+            width: "100%",
+            backgroundColor: "white",
+            padding: 10,
+        },
+        item: {
+            width: "100%",
+            height: "auto",
+        },
+        items: {
+            zIndex: 1,
+            position: "absolute",
+            top: "100%",
+            width: "100%",
+            outline: "none",
+            maxHeight: "30vh",
+            overflow: "auto",
+        },
+    })
+);
 
 interface Item {
     name: string;
@@ -42,18 +46,13 @@ interface Item {
     id: number;
 };
 
-const defaultItems = [
-    {
-        name: "Option 1",
+const defaultItems = Array(20).fill(0).map((_, index) => {
+    return {
+        name: Math.random().toFixed(4),
         selected: false,
-        id: 0,
-    },
-    {
-        name: "Option 2",
-        selected: false,
-        id: 1,
-    },
-] as Item[];
+        id: index,
+    };
+});
 
 export default function ComboBox() {
     const classes = useStyles();
@@ -66,76 +65,64 @@ export default function ComboBox() {
 
     const itemsDivRef = useRef<HTMLDivElement>(null);
 
-    const handleSelect = (name: string) => {
+    // when the user chooses an item
+    const handleSelect = (id: number) => {
         setItems(prev => {
             return prev.map(value => {
-                if (value.name === name) {
+                if (value.id === id) {
+                    setInput(value.name);
+                    setChosen(value.name);
+                    setFocused(false);
+
                     return { ...value, selected: true };
                 };
                 return { ...value, selected: false };
             });
         });
-        setInput(name);
-        setChosen(name);
-        setFocused(false);
     };
 
+    // when the user is hovering over the items
+    const handleHover = (id: number) => {
+        const item = items.find(x => x.id === id);
+        
+        if (item && !item.selected) {
+            setItems(prev => {
+                return prev.map(value => {
+                    if (value.id === id) {
+                        return { ...value, selected: true };
+                    };
+                    return { ...value, selected: false };
+                });
+            });
+        };
+    };
+
+    // when the user is typing
     const handleInput = (input: string) => {
         setInput(input);
         if (input) setFocused(true);
     };
 
-    useEffect(() => {
-        const navigation = (ev: KeyboardEvent) => {
-            if (ev.key === "Enter") {
-                // TODO
-                return;
-            };
-            // ArrowUp 
-            // ArrowDown
-
-            const navigate = (type: "ArrowDown" | "ArrowUp") => {
-                ev.preventDefault();
-                setItems(prev => {
-                    return prev.map((value, index) => {
-                        if (prev[index + (type === "ArrowUp" ? 1 : -1)]) {
-                            setInput(value.name);
-                            return { ...value, selected: true };
-                        };
-                        return { ...value, selected: false };
-                    });
-                });
-                itemsDivRef.current?.focus();
-            };
-
-            // move up
-            if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
-                navigate(ev.key);
-            };
-        };
-        document.addEventListener("keydown", navigation);
-
-        return () => document.removeEventListener("keydown", navigation);
-    }, []);
-
     return (<>
         <div>Input: {chosen}</div>
-
         {/** container for the combo-box */}
         <div className={classes.root}>
             {/** combo-box input */}
-            <div style={{ width: "100%", backgroundColor: "white" }}>
-                <div style={{ padding: 10 }}>
-                    <input
-                        type="text"
-                        className={classes.input}
-                        onChange={e => handleInput(e.target.value)}
-                        value={input}
-                        onFocus={() => setFocused(true)}
-                    />
-                </div>
+            <div
+                className={classes.inputContainer}
+                style={{
+                    borderRadius: focused ? "7px 7px 0 0" : "7px",
+                }}
+            >
+                <input
+                    type="text"
+                    className={classes.input}
+                    onChange={e => handleInput(e.target.value)}
+                    value={input}
+                    onFocus={() => setFocused(true)}
+                />
             </div>
-            
+
             {/** combo-box suggestions */}
             <div
                 hidden={!focused}
@@ -144,11 +131,17 @@ export default function ComboBox() {
                 ref={itemsDivRef}
                 className={classes.items}
             >
-                {items.map(value => (
+                {items.map((value, index) => (
                     <ComboBoxItem
                         item={value}
                         onSelect={handleSelect}
+                        onHover={handleHover}
+
                         key={value.id}
+                        style={{
+                            borderRadius: index === items.length - 1 ?
+                                "0 0 7px 7px" : undefined,
+                        }}
                     />
                 ))}
             </div>
@@ -157,23 +150,25 @@ export default function ComboBox() {
 };
 
 interface ComboBoxItemProps {
-    onSelect: (name: string) => void;
+    onSelect: (id: number) => void;
+    onHover: (id: number) => void;
     item: Item;
+    style?: CSSProperties;
 };
 
-const ComboBoxItem = memo(({ item, onSelect }: ComboBoxItemProps) => {
+const ComboBoxItem = memo(({ item, onSelect, onHover, style }: ComboBoxItemProps) => {
     const classes = useStyles();
     return (
         <div
             className={classes.item}
             style={{
+                ...style,
                 backgroundColor: item.selected ? "gray" : "white",
             }}
-            onClick={() => onSelect(item.name)}
+            onClick={() => onSelect(item.id)}
+            onMouseMove={() => onHover(item.id)}
         >
-            <div style={{ padding: 10 }}>
-                {item.name}
-            </div>
+            <div style={{ padding: 10 }}>{item.name}</div>
         </div>
     );
 });
