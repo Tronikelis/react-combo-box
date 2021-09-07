@@ -12,22 +12,29 @@ const useStyles = makeStyles(() =>
             position: "relative",
             width: "auto",
             height: "auto",
-            borderRadius: "10%",
+            display: "flex",
+            flexDirection: "column",
         },
         input: {
-            width: "100%",
+            width: "80.8%",
             height: "auto",
             border: "none",
             outline: "none",
+            margin: 10,
         },
         inputContainer: {
             width: "100%",
             backgroundColor: "white",
-            padding: 10,
         },
         item: {
             width: "100%",
             height: "auto",
+        },
+        itemsContainer: {
+            width: "100%",
+            maxHeight: "28vh",
+            position: "relative",
+            overflow: "auto",
         },
         items: {
             zIndex: 1,
@@ -35,8 +42,7 @@ const useStyles = makeStyles(() =>
             top: "100%",
             width: "100%",
             outline: "none",
-            maxHeight: "30vh",
-            overflow: "auto",
+            height: "auto",
         },
     })
 );
@@ -133,6 +139,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                     onChange={e => handleInput(e.target.value)}
                     value={input}
                     onFocus={() => setFocused(true)}
+                    onBlur={() => setTimeout(() => setFocused(false), 100)}
                 />
             </div>
 
@@ -144,19 +151,21 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                 ref={itemsDivRef}
                 className={classes.items}
             >
-                {items.map((value, index) => (
-                    <ComboBoxItem
-                        item={value}
-                        onSelect={handleSelect}
-                        onHover={handleHover}
+                <div className={classes.itemsContainer}>
+                    {items.map((value, index) => (
+                        <ComboBoxItem
+                            item={value}
+                            onSelect={handleSelect}
+                            onHover={handleHover}
 
-                        key={value.id}
-                        style={{
-                            borderRadius: index === items.length - 1 ?
-                                "0 0 7px 7px" : undefined,
-                        }}
-                    />
-                ))}
+                            key={value.id}
+                            style={{
+                                borderRadius: index === items.length - 1 ?
+                                    "0 0 7px 7px" : undefined,
+                            }}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     </>);
