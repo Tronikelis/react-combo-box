@@ -1,4 +1,5 @@
-import { useState, memo, useRef, CSSProperties } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, memo, useRef, CSSProperties, useEffect } from "react";
 import { makeStyles, createStyles } from "@material-ui/styles";
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -54,7 +55,14 @@ const defaultItems = Array(20).fill(0).map((_, index) => {
     };
 });
 
-export default function ComboBox() {
+interface ComboBoxProps {
+    /**
+     * Callback when the user has selected the item
+     */
+    onSelect?: (item: string) => any;
+};
+
+export default function ComboBox({ onSelect }: ComboBoxProps) {
     const classes = useStyles();
 
     const [items, setItems] = useState(defaultItems);
@@ -84,7 +92,7 @@ export default function ComboBox() {
     // when the user is hovering over the items
     const handleHover = (id: number) => {
         const item = items.find(x => x.id === id);
-        
+
         if (item && !item.selected) {
             setItems(prev => {
                 return prev.map(value => {
@@ -102,6 +110,11 @@ export default function ComboBox() {
         setInput(input);
         if (input) setFocused(true);
     };
+
+    // callback when the user has chosen an item
+    useEffect(() => {
+        onSelect && onSelect(chosen);
+    }, [chosen]);
 
     return (<>
         <div>Input: {chosen}</div>
