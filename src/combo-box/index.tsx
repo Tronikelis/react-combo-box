@@ -65,12 +65,17 @@ interface ComboBoxProps {
 export default function ComboBox({ onSelect }: ComboBoxProps) {
     const classes = useStyles();
 
+    // all the items 
     const [items, setItems] = useState(defaultItems);
+    // if we're focused, opens the combo box if true
     const [focused, setFocused] = useState(false);
+    // currently search input
     const [input, setInput] = useState("");
 
+    // the currently chosen option
     const [chosen, setChosen] = useState("");
 
+    // holds all the items, so that it can scroll to them
     const itemsRef = useRef<HTMLDivElement[]>([]);
 
     // populate itemsRef
@@ -199,17 +204,14 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
         {/** container for the combo-box */}
         <div className={classes.root}>
             {/** combo-box input */}
-
             <input
                 type="text"
                 className={classes.input}
                 onChange={e => handleInput(e.target.value)}
                 value={input}
                 onFocus={() => setFocused(true)}
-                // onBlur={() => setTimeout(() => setFocused(false), 100)}
             />
         
-
             {/** combo-box suggestions */}
             <div
                 hidden={!focused}
