@@ -7,7 +7,7 @@ const useStyles = makeStyles(() =>
     createStyles({
         root: {
             position: "relative",
-            width: "auto",
+            width: "100%",
             height: "auto",
             display: "flex",
             flexDirection: "column",
@@ -34,6 +34,7 @@ const useStyles = makeStyles(() =>
             zIndex: 1,
             position: "absolute",
             top: "100%",
+            // bottom: "100%",
             width: "100%",
             outline: "none",
             height: "auto",
@@ -47,26 +48,44 @@ interface Item {
     id: number;
 };
 
-const defaultItems = Array(30).fill(0).map((_, index) => {
-    return {
-        name: Math.random().toFixed(4),
-        selected: false,
-        id: index,
-    };
-});
+interface ComboBoxStyles {
+    input?: CSSProperties;
+    /**
+     * every item div
+     */
+    item?: CSSProperties;
+    /**
+     * one div for all the items (container)
+     */
+    items?: CSSProperties
+};
 
 interface ComboBoxProps {
     /**
+     * scroll type -> auto for instant, smooth for smooth
+     */
+    scroll?: "auto" | "smooth";
+    /**
+     * Pass in the items, {name, id}[]
+     */
+    options: { name: string; id: number }[];
+    /**
      * Callback when the user has selected the item
      */
-    onSelect?: (item: string) => any;
+    onSelect?: (item: string, id: number) => any;
+    /**
+     * style the components yourself
+     */
+    style?: ComboBoxStyles;
 };
 
-export default function ComboBox({ onSelect }: ComboBoxProps) {
+function ComboBox({ onSelect, options, scroll = "auto", style }: ComboBoxProps) {
     const classes = useStyles();
 
     // all the items 
-    const [items, setItems] = useState(defaultItems);
+    const [items, setItems] = useState<Item[]>(
+        options.map(x => ({ ...x, selected: false }))
+    );
     // if we're focused, opens the combo box if true
     const [focused, setFocused] = useState(false);
     // currently search input
@@ -77,6 +96,8 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
 
     // holds all the items, so that it can scroll to them
     const itemsRef = useRef<HTMLDivElement[]>([]);
+    // item container ref
+    const itemsContainerRef = useRef<HTMLDivElement>(null);
 
     // populate itemsRef
     useEffect(() => {
@@ -117,6 +138,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
 
     // when the user is typing
     const handleInput = (input: string) => {
+        // set the input
         setInput(input);
         if (input) setFocused(true);
 
@@ -133,8 +155,16 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
             }));
         };
         search();
+
+        // scroll to the top
+        itemsRef.current[0].scrollIntoView({
+            behavior: scroll,
+            inline: "nearest",
+            block: "nearest",
+        });
     };
 
+    // navigation happens here
     useEventListener("keydown", (ev: KeyboardEvent) => {
         if (ev.key === "Enter") {
             handleSelect(items.find(x => x.selected)?.id ?? -1);
@@ -163,7 +193,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                 };
 
                 itemsRef.current[test]?.scrollIntoView({
-                    behavior: "smooth",
+                    behavior: scroll,
                     inline: "nearest",
                     block: "nearest",
                 });
@@ -196,11 +226,12 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
 
     // callback when the user has chosen an item
     useEffect(() => {
-        onSelect && onSelect(chosen);
+        chosen && onSelect && onSelect(
+            chosen, items.find(x => x.name === chosen)?.id ?? -1
+        );
     }, [chosen]);
 
     return (<>
-        <div>Input: {chosen}</div>
         {/** container for the combo-box */}
         <div className={classes.root}>
             {/** combo-box input */}
@@ -210,6 +241,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                 onChange={e => handleInput(e.target.value)}
                 value={input}
                 onFocus={() => setFocused(true)}
+                style={style?.input}
             />
         
             {/** combo-box suggestions */}
@@ -222,6 +254,8 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                     onBlur={() => setFocused(false)}
                     onFocus={() => setFocused(true)}
                     tabIndex={1}
+                    ref={itemsContainerRef}
+                    style={style?.items}
                 >
                     {items.map((value, index) => (
                         <ComboBoxItem
@@ -232,6 +266,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                             reference={el => {
                                 (itemsRef.current[index] as any) = el;
                             }}
+                            style={style?.item}
                         />
                     ))}
                 </div>
@@ -239,6 +274,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
         </div>
     </>);
 };
+export default memo(ComboBox);
 
 interface ComboBoxItemProps {
     onSelect: (id: number) => void;
@@ -255,7 +291,7 @@ const ComboBoxItem = memo(({ item, onSelect, onHover, style, reference }: ComboB
             className={classes.item}
             style={{
                 ...style,
-                backgroundColor: item.selected ? "gray" : "white",
+                backgroundColor: item.selected ? "#C7C7C7" : "#ffffff",
             }}
             onClick={() => onSelect(item.id)}
             onMouseMove={() => onHover(item.id)}

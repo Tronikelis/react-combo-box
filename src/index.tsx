@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import ComboBox from "./combo-box";
-ReactDOM.render(<ComboBox />, document.getElementById("root"));
+import Test from "./test";
+
+ReactDOM.render(<Test />, document.getElementById("root"));
