@@ -1,4 +1,4 @@
-# Bare-bones react combo-box
+# Bare bones react combo-box
 
 ## Features
 
@@ -14,7 +14,7 @@
 
 ## Docs
 
-`Combo box component type`
+`Combo box component type:`
 
 ```ts
 interface ComboBoxProps {
@@ -37,7 +37,7 @@ interface ComboBoxProps {
 };
 ```
 
-`Combo box styles type`
+`Combo box styles type:`
 
 ```ts
 interface ComboBoxStyles {
