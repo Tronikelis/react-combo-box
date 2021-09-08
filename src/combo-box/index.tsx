@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, memo, useRef, CSSProperties, useEffect } from "react";
 import { makeStyles, createStyles } from "@material-ui/styles";
+import useEventListener from "@use-it/event-listener";
 
 const useStyles = makeStyles(() =>
     createStyles({
@@ -46,7 +47,7 @@ interface Item {
     id: number;
 };
 
-const defaultItems = Array(20).fill(0).map((_, index) => {
+const defaultItems = Array(30).fill(0).map((_, index) => {
     return {
         name: Math.random().toFixed(4),
         selected: false,
@@ -111,9 +112,13 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
 
         // sort the search
         const search = () => {
-            setItems(prev => prev.sort((left, right) => {
-                if (left.name.includes(input)) return -1;
-                if (right.name.includes(input)) return 1;
+            setItems(prev => prev.sort((a, b) => {
+                const left = a.name.toLowerCase();
+                const right = b.name.toLowerCase();
+                const query = input.toLowerCase();
+
+                if (left.includes(query)) return -1;
+                if (right.includes(query)) return 1;
                 return 0;
             }));
         };
@@ -124,6 +129,59 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
     useEffect(() => {
         onSelect && onSelect(chosen);
     }, [chosen]);
+
+    useEventListener("keydown", (ev: KeyboardEvent) => {
+        if (ev.key === "Enter") {
+            handleSelect(items.find(x => x.selected)?.id ?? -1);
+            return;
+        };
+        console.log({ items });
+        if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {            
+            setItems(prev => {
+                // assign a temporary new variable
+                let items = [...prev];
+                // check which way we're going
+                const way = ev.key === "ArrowUp" ? -1 : 1;
+
+                let test: number = 0;
+                // find the currently selected item and unselect it
+                // also, get its id
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].selected) {
+                        test = i + way;
+                        items[i] = {
+                            ...items[i],
+                            selected: false,
+                        };
+                        break;
+                    };
+                };
+
+                // select the new id
+                if (!items[test]) {
+                    if (way === -1) {
+                        items[items.length - 1] = {
+                            ...items[items.length - 1],
+                            selected: true,
+                        };
+                    } else {
+                        items[0] = {
+                            ...items[0],
+                            selected: true,
+                        };
+                    };
+                    return items;
+                };
+
+                items[test] = {
+                    ...items[test],
+                    selected: true,
+                };
+                // finally, return the items
+                return items;
+            });
+        };
+    });
 
     return (<>
         <div>Input: {chosen}</div>
@@ -137,19 +195,22 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                 onChange={e => handleInput(e.target.value)}
                 value={input}
                 onFocus={() => setFocused(true)}
-                onBlur={() => setTimeout(() => setFocused(false), 100)}
+                // onBlur={() => setTimeout(() => setFocused(false), 100)}
             />
         
 
             {/** combo-box suggestions */}
             <div
                 hidden={!focused}
-                onBlur={() => setFocused(false)}
-                tabIndex={1}
-                ref={itemsDivRef}
                 className={classes.items}
             >
-                <div className={classes.itemsContainer}>
+                <div
+                    className={classes.itemsContainer}
+                    ref={itemsDivRef}
+                    onBlur={() => setFocused(false)}
+                    onFocus={() => setFocused(true)}
+                    tabIndex={1}
+                >
                     {items.map((value, index) => (
                         <ComboBoxItem
                             item={value}
