@@ -10,7 +10,11 @@
 
 ## Example
 
-![Example](https://i.imgur.com/zyYpDdk.png)
+![PNG](https://i.imgur.com/zyYpDdk.png)
+
+## See it in action
+
+![Gif](https://i.imgur.com/S61t2iw.gif)
 
 ## Docs
 
