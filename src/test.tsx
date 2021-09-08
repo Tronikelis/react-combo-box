@@ -17,11 +17,11 @@ interface Item {
 export default function Test() {
     const [item, setItem] = useState<Item>();
 
-    return (<>
+    return (<div style={{  padding: 100,}}>
         {item?.name}
         <ComboBox
             options={options}
             onSelect={(name, id) => setItem({ name, id })}
         />  
-    </>);
+    </div>);
 };
