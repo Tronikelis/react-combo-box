@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, memo, useRef, CSSProperties, useEffect } from "react";
+import { useState, memo, useRef, CSSProperties, useEffect, Ref } from "react";
 import { makeStyles, createStyles } from "@material-ui/styles";
 import useEventListener from "@use-it/event-listener";
 
@@ -71,7 +71,12 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
 
     const [chosen, setChosen] = useState("");
 
-    const itemsDivRef = useRef<HTMLDivElement>(null);
+    const itemsRef = useRef<HTMLDivElement[]>([]);
+
+    // populate itemsRef
+    useEffect(() => {
+        itemsRef.current = itemsRef.current.slice(0, items.length);
+    }, [items.length]);
 
     // when the user chooses an item
     const handleSelect = (id: number) => {
@@ -125,18 +130,13 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
         search();
     };
 
-    // callback when the user has chosen an item
-    useEffect(() => {
-        onSelect && onSelect(chosen);
-    }, [chosen]);
-
     useEventListener("keydown", (ev: KeyboardEvent) => {
         if (ev.key === "Enter") {
             handleSelect(items.find(x => x.selected)?.id ?? -1);
             return;
         };
-        console.log({ items });
-        if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {            
+
+        if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
             setItems(prev => {
                 // assign a temporary new variable
                 let items = [...prev];
@@ -156,6 +156,12 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                         break;
                     };
                 };
+
+                itemsRef.current[test]?.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "nearest",
+                    block: "nearest",
+                });
 
                 // select the new id
                 if (!items[test]) {
@@ -183,6 +189,11 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
         };
     });
 
+    // callback when the user has chosen an item
+    useEffect(() => {
+        onSelect && onSelect(chosen);
+    }, [chosen]);
+
     return (<>
         <div>Input: {chosen}</div>
         {/** container for the combo-box */}
@@ -206,7 +217,6 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
             >
                 <div
                     className={classes.itemsContainer}
-                    ref={itemsDivRef}
                     onBlur={() => setFocused(false)}
                     onFocus={() => setFocused(true)}
                     tabIndex={1}
@@ -217,6 +227,9 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                             onSelect={handleSelect}
                             onHover={handleHover}
                             key={value.id}
+                            reference={el => {
+                                (itemsRef.current[index] as any) = el;
+                            }}
                         />
                     ))}
                 </div>
@@ -229,10 +242,11 @@ interface ComboBoxItemProps {
     onSelect: (id: number) => void;
     onHover: (id: number) => void;
     item: Item;
+    reference?: Ref<HTMLDivElement>;
     style?: CSSProperties;
 };
 
-const ComboBoxItem = memo(({ item, onSelect, onHover, style }: ComboBoxItemProps) => {
+const ComboBoxItem = memo(({ item, onSelect, onHover, style, reference }: ComboBoxItemProps) => {
     const classes = useStyles();
     return (
         <div
@@ -243,6 +257,7 @@ const ComboBoxItem = memo(({ item, onSelect, onHover, style }: ComboBoxItemProps
             }}
             onClick={() => onSelect(item.id)}
             onMouseMove={() => onHover(item.id)}
+            ref={reference}
         >
             <div>{item.name}</div>
         </div>
