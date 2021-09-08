@@ -2,10 +2,6 @@
 import { useState, memo, useRef, CSSProperties, useEffect } from "react";
 import { makeStyles, createStyles } from "@material-ui/styles";
 
-/* ---------------------------------------------------------------------------------------------- */
-/*                                 https://i.imgur.com/XnghBD5.png                                */
-/* ---------------------------------------------------------------------------------------------- */
-
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
@@ -16,11 +12,9 @@ const useStyles = makeStyles(() =>
             flexDirection: "column",
         },
         input: {
-            width: "80.8%",
             height: "auto",
             border: "none",
             outline: "none",
-            margin: 10,
         },
         inputContainer: {
             width: "100%",
@@ -33,7 +27,6 @@ const useStyles = makeStyles(() =>
         itemsContainer: {
             width: "100%",
             maxHeight: "28vh",
-            position: "relative",
             overflow: "auto",
         },
         items: {
@@ -115,6 +108,16 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
     const handleInput = (input: string) => {
         setInput(input);
         if (input) setFocused(true);
+
+        // sort the search
+        const search = () => {
+            setItems(prev => prev.sort((left, right) => {
+                if (left.name.includes(input)) return -1;
+                if (right.name.includes(input)) return 1;
+                return 0;
+            }));
+        };
+        search();
     };
 
     // callback when the user has chosen an item
@@ -127,21 +130,16 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
         {/** container for the combo-box */}
         <div className={classes.root}>
             {/** combo-box input */}
-            <div
-                className={classes.inputContainer}
-                style={{
-                    borderRadius: focused ? "7px 7px 0 0" : "7px",
-                }}
-            >
-                <input
-                    type="text"
-                    className={classes.input}
-                    onChange={e => handleInput(e.target.value)}
-                    value={input}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setTimeout(() => setFocused(false), 100)}
-                />
-            </div>
+
+            <input
+                type="text"
+                className={classes.input}
+                onChange={e => handleInput(e.target.value)}
+                value={input}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setTimeout(() => setFocused(false), 100)}
+            />
+        
 
             {/** combo-box suggestions */}
             <div
@@ -157,12 +155,7 @@ export default function ComboBox({ onSelect }: ComboBoxProps) {
                             item={value}
                             onSelect={handleSelect}
                             onHover={handleHover}
-
                             key={value.id}
-                            style={{
-                                borderRadius: index === items.length - 1 ?
-                                    "0 0 7px 7px" : undefined,
-                            }}
                         />
                     ))}
                 </div>
@@ -190,7 +183,7 @@ const ComboBoxItem = memo(({ item, onSelect, onHover, style }: ComboBoxItemProps
             onClick={() => onSelect(item.id)}
             onMouseMove={() => onHover(item.id)}
         >
-            <div style={{ padding: 10 }}>{item.name}</div>
+            <div>{item.name}</div>
         </div>
     );
 });
